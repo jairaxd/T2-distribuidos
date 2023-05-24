@@ -2,6 +2,71 @@ import json
 import random
 import threading
 import time
+import pika
+from confluent_kafka import Producer
+
+
+
+##############  RabbitMQ   ##################################################################################
+
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+channel = connection.channel()
+
+# Crear la cola en RabbitMQ
+channel.queue_declare(queue='dispositivos')
+
+# Simular peticiones de dispositivos
+for i in range(10):
+    mensaje = f"Peticion {i}"
+    
+    # Publicar el mensaje en la cola 'dispositivos'
+    channel.basic_publish(exchange='', routing_key='dispositivos', body=mensaje)
+    print(f"Mensaje enviado: {mensaje}")
+
+# Cerrar la conexión con RabbitMQ
+connection.close()
+
+#-----------------------------------------------------------------------------------------------
+
+# Establecer la conexión con el servidor RabbitMQ
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+channel = connection.channel()
+
+# Crear la cola en RabbitMQ
+channel.queue_declare(queue='dispositivos')
+
+# Definir la función para procesar los mensajes
+def procesar_mensaje(ch, method, properties, body):
+    print(f"Mensaje recibido: {body}")
+
+# Establecer el consumidor para la cola 'dispositivos'
+channel.basic_consume(queue='dispositivos', on_message_callback=procesar_mensaje, auto_ack=True)
+
+# Iniciar el consumo de mensajes
+channel.start_consuming()
+
+############################  KAFKA  ####################################################################
+
+bootstrap_servers = 'localhost:9092'  # Dirección y puerto del servidor de Kafka
+
+producer = Producer({'bootstrap.servers': bootstrap_servers})
+
+def send_message(topic, message):
+    producer.produce(topic, value=message)
+    producer.flush()
+
+# Simulación de peticiones de dispositivos
+for dispositivo in dispositivos:
+    # Obtener el mensaje del dispositivo
+    mensaje = obtener_mensaje(dispositivo)
+    
+    # Enviar el mensaje a Kafka
+    send_message('nombre_del_topico', mensaje)
+
+
+
+################################################################################################
+
 
 class IoTDevice:
     def __init__(self, device_id, transmission_interval):
