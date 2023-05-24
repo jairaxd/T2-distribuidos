@@ -1,0 +1,61 @@
+import json
+import random
+import threading
+import time
+
+class IoTDevice:
+    def __init__(self, device_id, transmission_interval):
+        self.device_id = device_id
+        self.transmission_interval = transmission_interval
+        self.is_transmitting = False
+        self.thread = None
+   #---------------------------------------------------------------
+    def start_transmission(self):
+        self.is_transmitting = True
+        self.thread = threading.Thread(target=self._transmit_data)
+        self.thread.start()
+   
+    def stop_transmission(self):
+        self.is_transmitting = False
+        if self.thread is not None:
+            self.thread.join()
+   #----------------------------------------------------------------
+
+   
+    def _transmit_data(self):
+        while self.is_transmitting:
+            timestamp = int(time.time())
+            value = random.random()
+            data = {
+                "Timestamp": timestamp,
+                "Value": value
+            }
+            json_data = json.dumps(data)
+            print(f"Device {self.device_id}: {json_data}")
+            time.sleep(self.transmission_interval)
+
+def simulate_iot_devices(num_devices, transmission_interval):
+    devices = []
+   
+#crea los servicios en orden
+    for i in range(num_devices):
+        device = IoTDevice(i+1, transmission_interval)
+        device.start_transmission()
+        devices.append(device)
+   
+   #no se detiene la creación de servicios, a menos que se detenga manualmente  
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+   
+    #stop
+    for device in devices:
+        device.stop_transmission()
+
+##---------pa probar-----------------------------------------------------------------
+num_devices = 5  # 5 dispositivos max
+transmission_interval = 2  # cada 2 seg
+
+simulate_iot_devices(num_devices, transmission_interval)
